@@ -4,7 +4,7 @@ import { Router } from "express";
 import HttpsProxyAgent from 'https-proxy-agent';
 import { messageJson, dataJson, errorJson } from './../config/format.js';
 import download from '../modules/download.js';
-import downloadOptions from '../modules/options.js';
+import downloadOptions, { pathOptions } from '../modules/options.js';
 
 const router = Router();
 /* Config Environment */
@@ -39,8 +39,9 @@ export const descargar = async (req, res) => {
 
     const option = downloadOptions(req.headers.cookies, agent);
     const {url, title} = req.body;
+    const pathFile = pathOptions(title);
     try {
-        const response = await download(url, title, option);
+        const response = await download(url, pathFile, option);
         res.send(response);
     } catch (error) {
         console.error(error);
