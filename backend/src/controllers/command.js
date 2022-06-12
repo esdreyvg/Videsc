@@ -40,8 +40,8 @@ export const descargar = async (req, res) => {
     const option = downloadOptions(req.headers.cookies, agent);
     const {url, title} = req.body;
     try {
-        response = await download(url, title, option);
-        res.send(messageJson('La descarga ha terminado!'));
+        const response = await download(url, title, option);
+        res.send(response);
     } catch (error) {
         console.error(error);
         res.send(errorJson(1, error));
