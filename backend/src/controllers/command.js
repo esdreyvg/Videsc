@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import ytld from 'ytdl-core'
+import ytld from 'ytdl-core';
 import { Router } from "express";
 import HttpsProxyAgent from 'https-proxy-agent';
 import { messageJson, dataJson, errorJson } from './../config/format.js';
@@ -9,8 +9,9 @@ import downloadOptions from '../modules/options.js';
 const router = Router();
 /* Config Environment */
 const environment = JSON.parse(await fs.readFile('./src/config/env.json', 'utf8'));
-const env = process.env.NODE_ENV || 'development'
-const server = environment[env]
+const env = process.env.NODE_ENV || 'development';
+const server = environment[env];
+
 export const validate = (req, res) => {
     const {url} = req.body;
     res.send(messageJson(ytld.validateURL(url)));
