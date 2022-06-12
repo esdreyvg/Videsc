@@ -42,7 +42,26 @@ export const descargar = async (req, res) => {
     const pathFile = pathOptions(title);
     try {
         const response = await download(url, pathFile, option);
-        res.send(response);
+        res.send(messageJson(response));
+    } catch (error) {
+        console.error(error);
+        res.send(errorJson(1, error));
+    }
+}
+
+export const descargarPlayList = async (req, res) => {
+    const proxy = process.env.http_proxy || server;
+    const agent = HttpsProxyAgent(proxy);
+
+    const option = downloadOptions(req.headers.cookies, agent);
+    const {urlList} = req.body;
+    try {
+        const response = urlList.map(async (item) => {
+            const videoInfo = await ytld.getInfo(item);
+            const pathFile = pathOptions(videoInfo.videoDetails.title);
+            return await download(item, pathFile, option);
+        });
+        res.send(messageJson(response));
     } catch (error) {
         console.error(error);
         res.send(errorJson(1, error));
@@ -50,6 +69,7 @@ export const descargar = async (req, res) => {
 }
 
 router.post('/download', descargar);
+router.post('/playlist', descargarPlayList);
 router.post('/validar', validate);
 router.post('/info', info);
 export default router;

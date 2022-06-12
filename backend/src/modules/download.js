@@ -1,14 +1,19 @@
-import fs, { existsSync, mkdir } from 'fs';
-import path from 'path';
+import fs from 'fs';
 import ytld from 'ytdl-core';
-import { messageJson } from '../config/format.js';
 
 export default function download(url, pathFile, option) {
     return new Promise((resolve, reject) => {
         try {         
             const video = ytld(url);
-        
+            const fstream = fs.createWriteStream(pathFile);
             let starttime;
+            
+            fstream.on('error', function(err) {
+                console.log(`Error: ${err}, Url: ${url}`);
+                video.unpipe();
+                fstream.end();
+                resolve(`Error: ${err}`);
+            });
             video.once('response', () => {
                 starttime = Date.now();
             });
@@ -21,14 +26,15 @@ export default function download(url, pathFile, option) {
                 }
             });
             video.on('end', () => {
-                process.stdout.write('\n\n');
+                process.stdout.write('\n');
             });
-            video.pipe(fs.createWriteStream(pathFile));
+            video.pipe(fstream);
             if (fs.existsSync(pathFile)) {
-                resolve(messageJson(`File created! in ${pathFile}`));
+                resolve(`File created! in ${pathFile}`);
             }
         } catch (error) {
             reject(error);
+            throw error;
         }
 
     })
