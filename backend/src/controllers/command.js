@@ -1,10 +1,16 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import ytld from 'ytdl-core'
 import { Router } from "express";
+import HttpsProxyAgent from 'https-proxy-agent';
 import { messageJson, dataJson, errorJson } from './../config/format.js';
+import download from '../modules/download.js';
+import downloadOptions from '../modules/options.js';
 
 const router = Router();
-
+/* Config Environment */
+const environment = JSON.parse(await fs.readFile('./src/config/env.json', 'utf8'));
+const env = process.env.NODE_ENV || 'development'
+const server = environment[env]
 export const validate = (req, res) => {
     const {url} = req.body;
     res.send(messageJson(ytld.validateURL(url)));
@@ -12,55 +18,33 @@ export const validate = (req, res) => {
 
 export const info = async (req, res) => {
     const {url} = req.body;
-    const infoVideo = await ytld.getBasicInfo(url);
+    const infoVideo = await ytld.getInfo(url);
+    const quality = infoVideo.formats.map((item)=> {return item.qualityLabel + ' - ' + item.container});
     try {
         res.send(dataJson({
             title: infoVideo.videoDetails.title,
-            private: infoVideo.videoDetails.isPrivate
+            private: infoVideo.videoDetails.isPrivate,
+            quality: quality,
         }));
     } catch (error) {
+        console.error(error);
         res.send(errorJson(1, error));
     }
 }
 
-export const descargar = (req, res) => {
-    const header = req.headers;
-    const {url} = req.body;
-    const video = ytld(url);
+export const descargar = async (req, res) => {
+    const proxy = process.env.http_proxy || server;
+    const agent = HttpsProxyAgent(proxy);
+
+    const option = downloadOptions(req.headers.cookies, agent);
+    const {url, title} = req.body;
     try {
-        video.pipe(fs.createWriteStream(output))
-        let starttime;
-        video.pipe(fs.createWriteStream(output));
-        video.once('response', () => {
-        starttime = Date.now();
-        });
-        video.on('progress', (chunkLength, downloaded, total) => {
-        const percent = downloaded / total;
-        const downloadedMinutes = (Date.now() - starttime) / 1000 / 60;
-        const estimatedDownloadTime = (downloadedMinutes / percent) - downloadedMinutes;
-        readline.cursorTo(process.stdout, 0);
-        process.stdout.write(`${(percent * 100).toFixed(2)}% downloaded `);
-        process.stdout.write(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)\n`);
-        process.stdout.write(`running for: ${downloadedMinutes.toFixed(2)}minutes`);
-        process.stdout.write(`, estimated time left: ${estimatedDownloadTime.toFixed(2)}minutes `);
-        readline.moveCursor(process.stdout, 0, -1);
-        });
-        video.on('end', () => {
-        process.stdout.write('\n\n');
-        });
-        res.send(messageJson('La descarga ha comenzado!'));
+        response = await download(url, title, option);
+        res.send(messageJson('La descarga ha terminado!'));
     } catch (error) {
+        console.error(error);
         res.send(errorJson(1, error));
     }
-    res.send({
-        url: header.url,
-        option: {
-            resolution: header.resolution,
-            type: header.type_video,
-            total: header.count_video
-        },
-        message: 'oie zi'
-    });
 }
 
 router.post('/download', descargar);
