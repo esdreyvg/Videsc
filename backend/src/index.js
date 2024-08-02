@@ -15,8 +15,8 @@ const option = {
     origin: allowedOrigin
 };
 /* Config Express */
-app.set("port", port)
-app.use(cors(option))
+app.set("port", port);
+app.use(cors(option));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))

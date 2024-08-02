@@ -3,7 +3,7 @@ import ytld from 'ytdl-core';
 import { Router } from "express";
 import HttpsProxyAgent from 'https-proxy-agent';
 import { messageJson, dataJson, errorJson } from './../config/format.js';
-import download from '../modules/download.js';
+import {download, youtube} from '../modules/download.js';
 import downloadOptions, { pathOptions } from '../modules/options.js';
 
 const router = Router();
@@ -68,7 +68,24 @@ export const descargarPlayList = async (req, res) => {
     }
 }
 
+export const downloadYt = async (req, res) => {
+    const videoUrl = req.body.url;
+    const downloadPath = req.body.path || 'downloads';
+
+    if (!videoUrl) {
+        return res.status(400).send('No video URL provided.');
+    }
+    try {
+        const response = await youtube(videoUrl, downloadPath);
+        res.send(messageJson(response));
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error fetching video information.');
+    }
+}
+
 router.post('/download', descargar);
+router.post('/yt', downloadYt);
 router.post('/playlist', descargarPlayList);
 router.post('/validar', validate);
 router.post('/info', info);

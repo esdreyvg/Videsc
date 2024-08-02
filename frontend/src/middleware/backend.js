@@ -4,7 +4,6 @@ const apiUrl = "http://localhost:4000";
 
 export const backend = axios.create({
   baseURL: apiUrl,
-  timeout: 10000,
   headers: {
     "Content-Type": "application/json;charset=utf-8",
     "Access-Control-Allow-Origin": "*"
